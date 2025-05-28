@@ -1,9 +1,9 @@
 package com.manpilogoff.dto;
 
-public class DownloadResp extends AbstractResponse {
+public class DownloadResponse extends AbstractResponse {
     private final String trackName;
 
-    public DownloadResp(String status, String trackName) {
+    public DownloadResponse(String status, String trackName) {
         super(status);
         this.trackName = trackName;
     }

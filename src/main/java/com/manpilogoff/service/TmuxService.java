@@ -167,4 +167,49 @@ public class TmuxService {
         logger.info("Выбор текущего трека");
         runTmuxCommand("", true, 10);
     }
+
+    /** Высокоуровневая операция поиска (cleanup -> start -> search -> scroll -> up) */
+    public static List<String> search(String param) {
+        logger.info("Performing full search for param: {}", param);
+        cleanup();
+        startSession();
+        sendSearchCommand(param);
+
+        List<String> allTracks = new ArrayList<>(parseTracks());
+        try {
+            allTracks.addAll(scrollAndCapture(29));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (int i = 0; i < 29; i++) {
+            sendCommand("Up", false, 10);
+        }
+
+        return allTracks.subList(0, Math.min(27, allTracks.size()));
+    }
+
+    /** Высокоуровневая операция скачивания трека по номеру */
+    public static String download(int trackNumber) {
+        logger.info("Performing download for track #{}", trackNumber);
+        List<String> currentTracks;
+        try {
+            currentTracks = scrollAndCapture(29);
+            for (int i = 0; i < 29; i++) {
+                sendCommand("Up", false, 20);
+            }
+            currentTracks = currentTracks.subList(0, Math.min(27, currentTracks.size()));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (trackNumber < 1 || trackNumber > currentTracks.size()) {
+            throw new IllegalArgumentException("invalid track number");
+        }
+
+        String selectedTrack = currentTracks.get(trackNumber - 1);
+        moveCursorToTrack(trackNumber);
+        selectTrack();
+        return selectedTrack;
+    }
 }
