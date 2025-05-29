@@ -1,5 +1,6 @@
 package com.manpilogoff.service;
 
+import com.manpilogoff.dto.TrackInfo;
 import org.junit.jupiter.api.*;
 
 import java.util.List;
@@ -11,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TmuxServiceIT {
 
     @BeforeEach
-
     void setUp() {
         TmuxService.cleanup();
         TmuxService.startSession();
@@ -42,14 +42,28 @@ public class TmuxServiceIT {
     @Order(3)
     void testParseTracksOnFakeInput() {
         String fakeOutput = """
-            [ ] 1. Track One
-            [ ] 2. Track Two
-            > [ ] 3. Track Three
+            [ ] 1. Lose Yourself by Eminem
+            [ ] 2. Without Me by Eminem
+            > [ ] 3. Houdini by Eminem
+            [ ] 4. The Real Slim Shady by Eminem
+            [ ] 5. Stan by Eminem
+            [ ] 6. Mockingbird by Eminem
+            ┌── preview ──────────────────────────┐
+            │ Released on:                        │
+            │ 2005-12-06                          │
+            │                                     │
+            │ ID: 3972271                         │
+            └─────────────────────────────────────┘
             """;
-        List<String> parsed = TmuxService.parseString(fakeOutput);
-        assertEquals(3, parsed.size());
-        assertEquals("Track One", parsed.get(0));
-        assertEquals("Track Three", parsed.get(2));
 
+        List<TrackInfo> parsed = TmuxService.parseString(fakeOutput);
+        assertEquals(6, parsed.size());
+
+        // Проверяем отдельные поля
+        assertEquals(new TrackInfo("Lose Yourself", "Eminem", "3972271"), parsed.get(0));
+        assertEquals(new TrackInfo("Houdini", "Eminem", "3972271"), parsed.get(2));
+        assertEquals("Mockingbird", parsed.get(5).trackTitle());
+        assertEquals("Eminem", parsed.get(3).artistName());
+        assertEquals("3972271", parsed.get(4).qobuzId());
     }
 }

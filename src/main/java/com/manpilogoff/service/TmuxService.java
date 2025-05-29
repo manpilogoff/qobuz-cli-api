@@ -1,5 +1,6 @@
 package com.manpilogoff.service;
 
+import com.manpilogoff.dto.TrackInfo; // Добавить импорт
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +15,7 @@ public class TmuxService {
     private static final Logger logger = LoggerFactory.getLogger(TmuxService.class);
 
     private static final String TMUX_SESSION = "rip_session";
-    private static final String VENV_PYTHON = "/opt/venvs/venv_2/bin/activate";
+    private static final String VENV_PYTHON = "/opt/venvs/venv_1/bin/activate";
 
     /**
      * Проверяет, активна ли tmux-сессия.
@@ -108,20 +109,40 @@ public class TmuxService {
     /**
      * Получает список треков из текущего вывода tmux.
      */
-    public static List<String> parseTracks() {
+    public static List<TrackInfo> parseTracks() { // CHANGED
         return parseString(getTmuxOutput());
     }
 
     /**
-     * Парсит вывод tmux, вытаскивая названия треков по шаблону.
+     * Парсит вывод tmux, вытаскивая название трека, исполнителя и ID.
+     * Изменено: теперь возвращает List<TrackInfo>, а не List<String>
      */
-    public static List<String> parseString(String output) {
-        List<String> tracks = new ArrayList<>();
-        Pattern pattern = Pattern.compile("^(>\\s*)?\\[\\s*]\\s*\\d+\\.\\s*(.*)$");
+    public static List<TrackInfo> parseString(String output) { // CHANGED
+        List<TrackInfo> tracks = new ArrayList<>();
+
+        // Паттерн для строки вида: [ ] 3. INFINITY VOLUME TWO by lxst cxntury
+        Pattern trackPattern = Pattern.compile("^(?:>\\s*)?\\[\\s*]\\s*\\d+\\.\\s*(.*?) by (.+)$");
+
+        // Паттерн для ID: ID: 123456789
+        Pattern idPattern = Pattern.compile("ID:\\s*(\\d+)");
+
+        // Собираем все ID (если их несколько, присваиваем по индексу)
+        List<String> ids = new ArrayList<>();
+
+        Matcher idMatcher = idPattern.matcher(output);
+        while (idMatcher.find()) {
+            ids.add(idMatcher.group(1));
+        }
+
+        int trackIndex = 0;
         for (String line : output.split("\\n")) {
-            Matcher m = pattern.matcher(line);
+            Matcher m = trackPattern.matcher(line.trim());
             if (m.find()) {
-                tracks.add(m.group(2).trim());
+                String title = m.group(1).trim();
+                String artist = m.group(2).trim();
+                String id = ids.size() == 1 ? ids.get(0) : (ids.size() > trackIndex ? ids.get(trackIndex) : null);
+                tracks.add(new TrackInfo(title, artist, id));
+                trackIndex++;
             }
         }
         return tracks;
@@ -130,9 +151,9 @@ public class TmuxService {
     /**
      * Прокручивает вниз N раз и собирает треки на каждом шаге.
      */
-    public static List<String> scrollAndCapture(int count) throws InterruptedException {
+    public static List<TrackInfo> scrollAndCapture(int count) throws InterruptedException { // CHANGED
         logger.info("Прокрутка интерфейса на {} шагов", count);
-        List<String> result = new ArrayList<>();
+        List<TrackInfo> result = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             runTmuxCommand("Down", false, 10);
             result.addAll(parseString(getTmuxOutput()));
@@ -151,7 +172,7 @@ public class TmuxService {
     }
 
     /**
-     * Наводит курсор на трек по номеру (1-based).
+     * Наводит курсор (">") на трек по номеру.
      */
     public static void moveCursorToTrack(int trackNumber) {
         logger.info("Навигация к треку №{}", trackNumber);
@@ -168,14 +189,16 @@ public class TmuxService {
         runTmuxCommand("", true, 10);
     }
 
-    /** Высокоуровневая операция поиска (cleanup -> start -> search -> scroll -> up) */
-    public static List<String> search(String param) {
+    /**
+     * Высокоуровневая операция поиска (cleanup -> start -> search -> scroll -> up)
+     * */
+    public static List<TrackInfo> search(String param) { // CHANGED
         logger.info("Performing full search for param: {}", param);
         cleanup();
         startSession();
         sendSearchCommand(param);
 
-        List<String> allTracks = new ArrayList<>(parseTracks());
+        List<TrackInfo> allTracks = new ArrayList<>(parseTracks());
         try {
             allTracks.addAll(scrollAndCapture(29));
         } catch (InterruptedException e) {
@@ -186,13 +209,17 @@ public class TmuxService {
             sendCommand("Up", false, 10);
         }
 
+        // Ограничиваем до 27 (как и было)
         return allTracks.subList(0, Math.min(27, allTracks.size()));
     }
 
-    /** Высокоуровневая операция скачивания трека по номеру */
-    public static String download(int trackNumber) {
+    /**
+     * Высокоуровневая операция скачивания трека по номеру
+     * */
+    public static TrackInfo download(int trackNumber) { // CHANGED
         logger.info("Performing download for track #{}", trackNumber);
-        List<String> currentTracks;
+        List<TrackInfo> currentTracks;
+
         try {
             currentTracks = scrollAndCapture(29);
             for (int i = 0; i < 29; i++) {
@@ -207,7 +234,7 @@ public class TmuxService {
             throw new IllegalArgumentException("invalid track number");
         }
 
-        String selectedTrack = currentTracks.get(trackNumber - 1);
+        TrackInfo selectedTrack = currentTracks.get(trackNumber - 1);
         moveCursorToTrack(trackNumber);
         selectTrack();
         return selectedTrack;
