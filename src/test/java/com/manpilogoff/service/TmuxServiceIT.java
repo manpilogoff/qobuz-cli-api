@@ -40,30 +40,28 @@ public class TmuxServiceIT {
 
     @Test
     @Order(3)
-    void testParseTracksOnFakeInput() {
+    void testParseActiveTrackOnly() {
         String fakeOutput = """
-            [ ] 1. Lose Yourself by Eminem
-            [ ] 2. Without Me by Eminem
-            > [ ] 3. Houdini by Eminem
-            [ ] 4. The Real Slim Shady by Eminem
-            [ ] 5. Stan by Eminem
-            [ ] 6. Mockingbird by Eminem
-            ┌── preview ──────────────────────────┐
-            │ Released on:                        │
-            │ 2005-12-06                          │
-            │                                     │
-            │ ID: 3972271                         │
-            └─────────────────────────────────────┘
-            """;
+        [ ] 1. Lose Yourself by Eminem
+        [ ] 2. Without Me by Eminem
+        > [ ] 3. Houdini by Eminem
+        [ ] 4. The Real Slim Shady by Eminem
+        [ ] 5. Stan by Eminem
+        [ ] 6. Mockingbird by Eminem
+        ┌── preview ──────────────────────────┐
+        │ Released on:                        │
+        │ 2005-12-06                          │
+        │                                     │
+        │ ID: 3972271                         │
+        └─────────────────────────────────────┘
+        """;
 
-        List<TrackInfo> parsed = TmuxService.parseString(fakeOutput);
-        assertEquals(6, parsed.size());
+        TrackInfo active = TmuxService.parseActiveTrackAndId(fakeOutput);
 
-        // Проверяем отдельные поля
-        assertEquals(new TrackInfo("Lose Yourself", "Eminem", "3972271"), parsed.get(0));
-        assertEquals(new TrackInfo("Houdini", "Eminem", "3972271"), parsed.get(2));
-        assertEquals("Mockingbird", parsed.get(5).trackTitle());
-        assertEquals("Eminem", parsed.get(3).artistName());
-        assertEquals("3972271", parsed.get(4).qobuzId());
+        assertNotNull(active);
+        assertEquals("Houdini", active.trackTitle());
+        assertEquals("Eminem", active.artistName());
+        assertEquals("3972271", active.id());
     }
+
 }
