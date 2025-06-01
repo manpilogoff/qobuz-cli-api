@@ -1,0 +1,11 @@
+testName,inputLine,expectedTitle,expectedArtist
+valid_active_track_1,"> [ ] 1. Moonlight by Xxxtentacion",Moonlight,Xxxtentacion
+valid_active_track_2,"> [ ] 10. Look At Me! by Xxxtentacion",Look At Me!,Xxxtentacion
+valid_active_track_3,"> [ ] 15. Dressed for Success by Roxette",Dressed for Success,Roxette
+complex_track_1,"> [ ] 6. XXX. Variation 30 a 1 Clav. : Quodlibet (Remastere by Glenn Gould",XXX. Variation 30 a 1 Clav. : Quodlibet (Remastere,Glenn Gould
+complex_track_2,"> [ ] 14. the remedy for a broken heart (why am I so in love by Xxxtentacion",the remedy for a broken heart (why am I so in love,Xxxtentacion
+inactive_track,"  [ ] 3. SAD! by Xxxtentacion",null,null
+invalid_format_1,"> [Invalid] 1. Bad Format by Artist",null,null
+invalid_format_2,"Just random text without pattern",null,null
+missing_number,"> [ ] . Missing Number by Artist",null,null
+missing_artist,"> [ ] 1. No Artist",null,null

@@ -1,9 +1,7 @@
 package com.manpilogoff.dto;
 
-import lombok.Getter;
 
-
-public record TrackInfo(
+public record TrackData(
         String trackTitle,
         String artistName,
         String id
