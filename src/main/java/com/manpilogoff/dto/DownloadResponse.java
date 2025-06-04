@@ -1,14 +1,12 @@
 package com.manpilogoff.dto;
 
 public class DownloadResponse extends AbstractResponse {
-    private final String trackName;
+    private final TrackData trackData;
 
-    public DownloadResponse(String status, String trackName) {
+    public DownloadResponse(String status, TrackData trackData) {
         super(status);
-        this.trackName = trackName;
+        this.trackData = trackData;
     }
 
-    public String getTrackName() {
-        return trackName;
-    }
+
 }
